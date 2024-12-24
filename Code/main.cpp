@@ -1,12 +1,6 @@
-#include "Game/Game.h"
+#include "Tools/Console.h"
 
 int main()
-{
-	Game game;
+{  
 
-	while (game.IsRunning())
-	{
-		game.RunGame();
-	}
-	return 0;
 }
