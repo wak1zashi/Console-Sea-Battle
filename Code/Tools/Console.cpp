@@ -1,59 +1,59 @@
 #include "Console.h"
 
-namespace utl
-{
-    Console cnsl;  
-}
-
 #ifdef __linux__
 
+#include "OutputStream.h"
 #include <vector>
+#include <ncurses.h>
 
-utl::Console::Console()
+waki::Console& waki::Console::GetObject()
 {
-	BeginNcurses();
-	HideCursor();
-	EnableColorMode();
+	static Console console;
+	return console;
 }
 
-utl::Console::~Console()
+waki::Console::~Console()
 {
 	EndNcurses();
 }
 
-void utl::Console::Refresh()
+void waki::Console::Refresh()
 {
 	refresh();
 }
 
-void utl::Console::ClearScreen()
+void waki::Console::ClearScreen()
 {
 	clear();
 }
 
-void utl::Console::PauseApplication()
+void waki::Console::PauseApplication()
 {
-	printw("Press any key to continue . . .");
-	refresh();
+	waki::cout << "Press any key to continue . . .";
 	getch();
 }
 
-void utl::Console::StopFor(unsigned milliseconds)
+void waki::Console::StopFor(unsigned milliseconds)
 {
 	napms(milliseconds);
 }
 
-void utl::Console::ResetCursorPosition()
+void waki::Console::ResetCursorPosition()
 {
-	SetCursorPosition(0, 0);
+	MoveCursorPosition(0, 0);
 }
 
-void utl::Console::SetCursorPosition(unsigned y, unsigned x)
+void waki::Console::MoveCursorPosition(unsigned y, unsigned x)
 {
 	move(y, x);
 }
 
-utl::Vector2DS utl::Console::GetCursorPosition()
+void waki::Console::MoveCursorPosition(Vector2D vec)
+{
+	move(vec.y, vec.x);
+}
+
+waki::Vector2DS waki::Console::GetCursorPosition()
 {
 	Vector2DS cursorPosition{0, 0};
 
@@ -62,12 +62,17 @@ utl::Vector2DS utl::Console::GetCursorPosition()
 	return cursorPosition; 
 }
 
-bool utl::Console::SupportsColors()
+void waki::Console::Timeout(int time)
+{
+	timeout(time);
+}
+
+bool waki::Console::SupportsColors()
 {
 	return has_colors();
 }
 
-void utl::Console::SetColor(Color color)
+void waki::Console::SetColor(Color color)
 {
 	if(!SupportsColors())
 	{
@@ -77,27 +82,52 @@ void utl::Console::SetColor(Color color)
 	attron(COLOR_PAIR(static_cast<int>(color)));
 }
 
-void utl::Console::DisableColor()
+void waki::Console::DisableColor()
 {	
 	standend();
 }
 
-void utl::Console::BeginNcurses()
+waki::Console::Console()
+{
+	BeginNcurses();
+	HideCursor();
+	DisableBuffering();
+	EnableFuncKeys();
+	DisableCharOutput();
+	EnableColorMode();
+}
+
+void waki::Console::BeginNcurses()
 {
 	initscr();
 }
 
-void utl::Console::EndNcurses()
+void waki::Console::EndNcurses()
 {
 	endwin();
 }
 
-void utl::Console::HideCursor()
+void waki::Console::HideCursor()
 {
 	curs_set(0);
 }
 
-bool utl::Console::EnableColorMode()
+void waki::Console::DisableBuffering()
+{
+	cbreak();
+}
+
+void waki::Console::EnableFuncKeys()
+{
+	keypad(stdscr, TRUE);
+}
+
+void waki::Console::DisableCharOutput()
+{
+	noecho();
+}
+
+bool waki::Console::EnableColorMode()
 {
 	if(!SupportsColors())
 	{
@@ -111,7 +141,7 @@ bool utl::Console::EnableColorMode()
 	return true;
 }
 
-void utl::Console::InitializeColor()
+void waki::Console::InitializeColor()
 {
     const int backgroundColor = 2;
 	init_color(backgroundColor, 30 * 1000 / 255, 30 * 1000 / 255, 46 * 1000 / 255); 
@@ -170,45 +200,47 @@ void utl::Console::InitializeColor()
 #include <iostream>
 #include <Windows.h>
 
-utl::Console::Console()
-{ 
-	consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	consoleWindow = GetConsoleWindow();
-
-	HideCursor();
-	DisableScrollBars();
-	DisableMaximizeButton();
-	DisableWindowResizing();
+waki::Console& waki::Console::GetObject()
+{
+	static Console console;
+	return console;
 }
 
-void utl::Console::ClearScreen()
+void waki::Console::ClearScreen()
 {
 	system("cls");
 }
 
-void utl::Console::PauseApplication()
+void waki::Console::PauseApplication()
 {
 	system("pause");
 }
 
-void utl::Console::StopFor(unsigned milliseconds)
+void waki::Console::StopFor(unsigned milliseconds)
 {
 	Sleep(milliseconds);
 }
 
-void utl::Console::ResetCursorPosition()
+void waki::Console::ResetCursorPosition()
 {
 	SetCursorPosition(0, 0);
 }
 
-void utl::Console::SetCursorPosition(unsigned y, unsigned x)
+void waki::Console::SetCursorPosition(unsigned y, unsigned x)
 {
 	std::cout.flush();
 	COORD newCursorPosition = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 	SetConsoleCursorPosition(consoleHandle, newCursorPosition);
 }
 
-utl::Vector2DS utl::Console::GetCursorPosition()
+void waki::Console::SetCursorPosition(Vector2D vec)
+{
+	std::cout.flush();
+	COORD newCursorPosition = { static_cast<SHORT>(vec.x), static_cast<SHORT>(vec.y) };
+	SetConsoleCursorPosition(consoleHandle, newCursorPosition);
+}
+
+waki::Vector2DS waki::Console::GetCursorPosition()
 {
 	Vector2DS cursorPosition{0, 0};
 
@@ -219,7 +251,7 @@ utl::Vector2DS utl::Console::GetCursorPosition()
 	return cursorPosition; 
 }
 
-void utl::Console::SetWindowSize(SHORT width, SHORT height)
+void waki::Console::SetWindowSize(SHORT width, SHORT height)
 {
 	SMALL_RECT windowArea = { 0, 0, width, height };
 	COORD coord;
@@ -230,7 +262,7 @@ void utl::Console::SetWindowSize(SHORT width, SHORT height)
 	SetConsoleWindowInfo(consoleHandle, TRUE, &windowArea);
 }
 
-void utl::Console::SetFontSettings(SHORT fontSize, const std::wstring& fontName)
+void waki::Console::SetFontSettings(SHORT fontSize, const std::wstring& fontName)
 {
 	CONSOLE_FONT_INFOEX cfi;
 	cfi.cbSize = sizeof(cfi);
@@ -244,12 +276,12 @@ void utl::Console::SetFontSettings(SHORT fontSize, const std::wstring& fontName)
 	SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 }
 
-void utl::Console::SetTitle(const std::string& title)
+void waki::Console::SetTitle(const std::string& title)
 {
 	SetConsoleTitleA(title.c_str());
 }
 
-void utl::Console::SetColor(Color color)
+void waki::Console::SetColor(Color color)
 {
 	if (color == Color::Whiteandblue)
 	{
@@ -261,12 +293,23 @@ void utl::Console::SetColor(Color color)
 	std::cout << "\033[38;5;" << static_cast<int>(color) << "m";
 }
 
-void utl::Console::DisableColor()
+void waki::Console::DisableColor()
 {
 	std::cout << "\033[0m";
 }
 
-void utl::Console::HideCursor()
+waki::Console::Console()
+{ 	
+	consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	consoleWindow = GetConsoleWindow();
+
+	HideCursor();
+	DisableScrollBars();
+	DisableMaximizeButton();
+	DisableWindowResizing();
+}
+
+void waki::Console::HideCursor()
 {
 	CONSOLE_CURSOR_INFO cursorInfo;
 	cursorInfo.dwSize = 100;
@@ -274,7 +317,7 @@ void utl::Console::HideCursor()
 	SetConsoleCursorInfo(consoleHandle, &cursorInfo);
 }
 
-void utl::Console::DisableScrollBars()
+void waki::Console::DisableScrollBars()
 {
 	CONSOLE_SCREEN_BUFFER_INFO bufferInfo;
 	GetConsoleScreenBufferInfo(consoleHandle, &bufferInfo);
@@ -287,7 +330,7 @@ void utl::Console::DisableScrollBars()
 	SetConsoleScreenBufferSize(consoleHandle, newBuffetSize);
 }
 
-void utl::Console::DisableMaximizeButton()
+void waki::Console::DisableMaximizeButton()
 {
 	DWORD windowStyle = GetWindowLong(consoleWindow, GWL_STYLE);
 	windowStyle &= ~WS_MAXIMIZEBOX;
@@ -295,8 +338,13 @@ void utl::Console::DisableMaximizeButton()
 	SetWindowPos(consoleWindow, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_FRAMECHANGED);
 }
 
-void utl::Console::DisableWindowResizing()
+void waki::Console::DisableWindowResizing()
 {
 	SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
 }
 #endif
+
+namespace waki
+{
+	Console& cnsl = Console::GetObject();
+}

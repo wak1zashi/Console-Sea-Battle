@@ -6,14 +6,13 @@
 
 #ifdef __linux__
 
-#include <ncurses.h>
-
-namespace utl
+namespace waki
 {
 	class Console
 	{
 	public:
-		Console();
+		static Console& GetObject();
+
 		~Console();
 		void Refresh();
 
@@ -22,34 +21,51 @@ namespace utl
 		void StopFor(unsigned milliseconds);
 
 		void ResetCursorPosition();
-		void SetCursorPosition(unsigned y, unsigned x);
+		void MoveCursorPosition(unsigned y, unsigned x);
+		void MoveCursorPosition(Vector2D vec);
 		Vector2DS GetCursorPosition();
+
+		void Timeout(int time);
 
 		bool SupportsColors();
 		void SetColor(Color color);
 		void DisableColor();
 	private:
+		Console();
+
+		Console(Console&) = delete;
+		Console(Console&&) = delete;
+		Console& operator=(Console&) = delete;
+		Console& operator=(Console&&) = delete;
+
 		void BeginNcurses();
 		void EndNcurses();
 
 		void HideCursor();
-
+		void DisableBuffering();
+		void EnableFuncKeys();
+		void DisableCharOutput();
 		bool EnableColorMode();
+		
 		void InitializeColor();
 	};
-	extern Console cnsl;
 }
 #elif _WIN32
 
 #include <string>
 #include <Windows.h>
 
-namespace utl
+namespace waki
 {
 	class Console
 	{
-	public:
-		Console();
+	public:	
+		static Console& GetObject();
+
+		Console(Console&) = delete;
+		Console(Console&&) = delete;
+		Console& operator=(Console&) = delete;
+		Console& operator=(Console&&) = delete;
 
 		void ClearScreen();
 		void PauseApplication();
@@ -57,6 +73,7 @@ namespace utl
 
 		void ResetCursorPosition();
 		void SetCursorPosition(unsigned y, unsigned x);
+		void SetCursorPosition(Vector2D vec);
 		Vector2DS GetCursorPosition();
 
 		void SetWindowSize(SHORT width, SHORT height);
@@ -66,6 +83,8 @@ namespace utl
 		void SetColor(Color color);
 		void DisableColor();
 	private:
+		Console();
+
 		void HideCursor();
 		void DisableScrollBars();
 		void DisableMaximizeButton();
@@ -74,6 +93,11 @@ namespace utl
 		HANDLE consoleHandle;
 		HWND consoleWindow;
 	};
-	extern Console cnsl;
 }
 #endif
+
+
+namespace waki
+{
+	extern Console& cnsl;
+}

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace utl
+namespace waki
 {
 	template<typename _Ty>
 	struct Vector2DBase

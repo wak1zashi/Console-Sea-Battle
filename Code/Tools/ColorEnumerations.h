@@ -1,6 +1,6 @@
 #pragma once
 
-namespace utl
+namespace waki
 {
   enum class Color
   {
